@@ -13,10 +13,10 @@ enum BaroType
 class BaroDevice
 {
 public:
-    BaroDevice(const BaroDevice &other) = delete;
-    BaroDevice(BaroType Type, const char *I2CChannel, uint8_t I2CAddress);
-    BaroData BaroRead();
-    ~BaroDevice();
+    inline BaroDevice(const BaroDevice &other) = delete;
+    inline BaroDevice(BaroType Type, const char *I2CChannel, uint8_t I2CAddress);
+    inline BaroData BaroRead();
+    inline ~BaroDevice();
 
 private:
     BaroType bType;
