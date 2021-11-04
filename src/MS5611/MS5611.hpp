@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
