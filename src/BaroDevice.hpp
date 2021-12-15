@@ -1,4 +1,5 @@
 #pragma once
+#include <mutex>
 #include "Baro.hpp"
 #include "MS5611/MS5611.hpp"
 
@@ -16,6 +17,7 @@ public:
     inline BaroDevice(const BaroDevice &other) = delete;
     inline BaroDevice(BaroType Type, const char *I2CChannel, uint8_t I2CAddress);
     inline BaroData BaroRead();
+    inline BaroData BaroRead(std::mutex *I2CLock);
     inline ~BaroDevice();
 
 private:
@@ -43,6 +45,23 @@ BaroData BaroDevice::BaroRead()
     case BaroType::MS5611:
     {
         return MS5611Device->MS5611Read();
+    }
+    case BaroType::BMP180:
+        break;
+    }
+
+    BaroData Data;
+    Data.IsDataCorrect = false;
+    return Data;
+};
+
+BaroData BaroDevice::BaroRead(std::mutex *I2CLock)
+{
+    switch (bType)
+    {
+    case BaroType::MS5611:
+    {
+        return MS5611Device->MS5611Read(I2CLock);
     }
     case BaroType::BMP180:
         break;
