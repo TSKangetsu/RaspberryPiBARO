@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <asm/ioctls.h>
 #include <sys/types.h>
 #include <linux/i2c-dev.h>
 #include "../Baro.hpp"
@@ -28,14 +29,14 @@ public:
     inline MS5611Baro(const char *I2CChannel = "/dev/i2c-1", uint8_t I2CAddress = 0x77)
     {
         if ((MS5611FD = open(I2CChannel, O_RDWR)) < 0)
-            throw - 1;
+            throw -1;
         if (ioctl(MS5611FD, I2C_SLAVE, I2CAddress) < 0)
-            throw - 2;
+            throw -2;
         if (ioctl(MS5611FD, I2C_TIMEOUT, 0x01) < 0) // set to 10ms?
-            throw - 2;
+            throw -2;
 
         if (write(MS5611FD, &MS5611RESET, 1) != 1)
-            throw - 3;
+            throw -3;
         usleep(10000);
         for (int i = 0; i < 6; i++)
         {
@@ -43,9 +44,9 @@ public:
             uint8_t r8b[] = {0, 0};
             char AddressOffset = (CMD_PROM_READ + (i * 2));
             if (write(MS5611FD, &AddressOffset, 1) != 1)
-                throw - 4;
+                throw -4;
             if (read(MS5611FD, r8b, 2) != 2)
-                throw - 5;
+                throw -5;
             ret = r8b[0] * 256 + r8b[1];
             C[i] = ret;
             usleep(1000);
@@ -56,7 +57,7 @@ public:
     {
         BaroData Data;
 
-        //D2 TemperatureC Raw
+        // D2 TemperatureC Raw
         {
             long ret = 0;
             uint8_t D[] = {0, 0, 0};
@@ -97,7 +98,7 @@ public:
                 }
             }
         }
-        //D1 Pressure Raw
+        // D1 Pressure Raw
         {
             long ret = 0;
             uint8_t D[] = {0, 0, 0};
@@ -128,7 +129,7 @@ public:
     {
         BaroData Data;
 
-        //D2 TemperatureC Raw
+        // D2 TemperatureC Raw
         {
             long ret = 0;
             uint8_t D[] = {0, 0, 0};
@@ -176,7 +177,7 @@ public:
                 }
             }
         }
-        //D1 Pressure Raw
+        // D1 Pressure Raw
         {
             long ret = 0;
             uint8_t D[] = {0, 0, 0};
@@ -219,7 +220,7 @@ private:
     uint16_t C[7];
     uint32_t D1;
     uint32_t D2;
-    //cac tmp
+    // cac tmp
     int64_t dT;
     int32_t TEMP;
     int64_t OFF;
