@@ -34,6 +34,7 @@ int main(int, char **)
         BData = Baro->BaroRead();
         if (BData.IsDataCorrect)
         {
+
             filterA = filterA * 0.8 + BData.AltitudeM * 0.2;
             filterP = filterP * 0.8 + BData.PressureHPA * 0.2;
             filterT = filterT * 0.8 + BData.TemperatureC * 0.2;
@@ -42,6 +43,9 @@ int main(int, char **)
             std::cout << "Baro TemperatureC:" << (int)(filterT * 100.f) / 100.f << "                                      \n\n";
             std::cout << "\033[4A";
             std::cout << "\033[K";
+
+            // filterP = BData.PressureHPA;  if mode is bmp2800
+            // filterT = BData.TemperatureC;
         }
         else
         {
