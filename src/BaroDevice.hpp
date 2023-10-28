@@ -2,11 +2,12 @@
 #include <mutex>
 #include "Baro.hpp"
 #include "MS5611/MS5611.hpp"
+#include "BMP280/BMP280.hpp"
 
 enum BaroType
 {
     MS5611,
-    BMP180,
+    BMP280,
 };
 
 // Don't Try to Copy between two baro Device
@@ -23,6 +24,7 @@ public:
 private:
     BaroType bType;
     MS5611Baro *MS5611Device;
+    BMP280Baro *BMP280Device;
 };
 
 BaroDevice::BaroDevice(BaroType Type, const char *I2CChannel, uint8_t I2CAddress)
@@ -33,7 +35,8 @@ BaroDevice::BaroDevice(BaroType Type, const char *I2CChannel, uint8_t I2CAddress
     case BaroType::MS5611:
         MS5611Device = new MS5611Baro(I2CChannel, I2CAddress);
         break;
-    case BaroType::BMP180:
+    case BaroType::BMP280:
+        BMP280Device = new BMP280Baro(I2CChannel, I2CAddress);
         break;
     }
 }
@@ -46,7 +49,8 @@ BaroData BaroDevice::BaroRead()
     {
         return MS5611Device->MS5611Read();
     }
-    case BaroType::BMP180:
+    case BaroType::BMP280:
+        return BMP280Device->BMP280Read();
         break;
     }
 
@@ -63,7 +67,7 @@ BaroData BaroDevice::BaroRead(std::mutex *I2CLock)
     {
         return MS5611Device->MS5611Read(I2CLock);
     }
-    case BaroType::BMP180:
+    case BaroType::BMP280:
         break;
     }
 
@@ -79,7 +83,8 @@ BaroDevice::~BaroDevice()
     case BaroType::MS5611:
         delete MS5611Device;
         break;
-    case BaroType::BMP180:
+    case BaroType::BMP280:
+        delete BMP280Device;
         break;
     }
 }
