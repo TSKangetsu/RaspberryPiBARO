@@ -3,11 +3,11 @@
 
 int main(int, char **)
 {
-    //Don't Try to Copy between two baro Device
+    // Don't Try to Copy between two baro Device
     BaroDevice *Baro;
     try
     {
-        Baro = new BaroDevice(BaroType::MS5611, "/dev/i2c-1", 0x77);
+        Baro = new BaroDevice(BaroType::BMP280, "/dev/i2c-1", 0x77);
     }
     catch (int error)
     {
@@ -44,8 +44,10 @@ int main(int, char **)
             std::cout << "\033[4A";
             std::cout << "\033[K";
 
-            // filterP = BData.PressureHPA;  if mode is bmp2800
+            // filterP = BData.PressureHPA; // if mode is bmp2800
             // filterT = BData.TemperatureC;
+            // std::cout << "Baro Pressure HPA:" << (int)(filterP * 100.f) / 100.f << "                                      \n";
+            // std::cout << "Baro TemperatureC:" << (int)(filterT * 100.f) / 100.f << "                                      \n\n";
         }
         else
         {
