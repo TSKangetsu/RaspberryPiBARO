@@ -24,6 +24,7 @@
 #define BMP280_CONFIG_REG 0xF5          /*Configuration Register */
 #define BMP280_PRESSURE_MSB_REG 0xF7    /*Pressure MSB Register */
 #define BMP280_TEMPERATURE_MSB_REG 0xFA /*Temperature MSB Reg */
+#define DEFAULT_SEA_PRESSURE 1013.25f
 
 #define BMP280_MODE1 (BMP280_P_MODE_5 << 2 | BMP280_T_MODE_5 << 5 | BMP280_NORMAL_MODE)
 #define BMP280_MODE2 (BMP280_FILTER_MODE_5 << 2 | BMP280_T_SB2 << 5)
@@ -47,7 +48,7 @@ public:
             uint16_t ret = 0;
             uint8_t r8b[] = {0, 0};
             char AddressOffset = BMP280_DIG_T1_LSB_REG + i;
-            if (write(BMP280FD, &AddressOffset, 1) != 1) //correct data
+            if (write(BMP280FD, &AddressOffset, 1) != 1) // correct data
                 throw -3;
             if (read(BMP280FD, r8b, 2) != 2)
                 throw -4;
@@ -141,6 +142,7 @@ public:
                 var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
                 Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
             }
+            Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / DEFAULT_SEA_PRESSURE), 0.1902949f));
         }
         return Data;
     }
@@ -209,6 +211,7 @@ public:
                 var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
                 Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
             }
+            Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / DEFAULT_SEA_PRESSURE), 0.1902949f));
         }
         return Data;
     }
@@ -217,7 +220,6 @@ public:
     {
         close(BMP280FD);
     };
-
 
     typedef enum
     {
@@ -267,6 +269,7 @@ public:
         BMP280_T_SB7,       /*2000ms*/
         BMP280_T_SB8,       /*4000ms*/
     } BMP280_T_SB;
+
 private:
     uint8_t wdata[2];
     uint8_t rdata[24];
