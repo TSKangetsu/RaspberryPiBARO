@@ -1,8 +1,10 @@
 {
-    "files.associations": {
-        "initializer_list": "cpp",
-        "string_view": "cpp",
-        "type_traits": "cpp",
-        "iostream": "cpp"
-    }
+    "custom.user": "root",
+    "custom.ipaddress": "192.168.6.56",
+    "custom.gdbserverPort": "9590",
+    "custom.gdb": "aarch64-openwrt-linux-gdb",
+    "custom.exe": "RaspberryPiBARO",
+    "custom.exeargs": " ",
+    "custom.proxyext": "proxychains -f /etc/proxychains4_dev1.conf -q",
+    "custom.extenalcmd": "scp APMconfig.json root@192.168.6.56:/etc/",
 }
