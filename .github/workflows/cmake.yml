@@ -1,0 +1,36 @@
+name: CMake
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: set musl
+      run: |
+          sudo mkdir -p /usr/crpgcc/
+          sudo chmod 777 -R /usr/crpgcc/
+          wget https://musl.cc/aarch64-linux-musl-cross.tgz
+          tar -zxf aarch64-linux-musl-cross.tgz -C /usr/crpgcc/
+           
+    - name: add to PATH
+      run: echo "/usr/crpgcc/aarch64-linux-musl-cross/bin/" >> $GITHUB_PATH
+          
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+      
+    - name: Configure CMake
+      run: CC=aarch64-linux-musl-gcc CXX=aarch64-linux-musl-g++ cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: CC=aarch64-linux-musl-gcc CXX=aarch64-linux-musl-g++ cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
