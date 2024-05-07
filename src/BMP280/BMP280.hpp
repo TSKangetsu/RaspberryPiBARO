@@ -211,7 +211,7 @@ public:
                 var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
                 Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
             }
-            Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / 100 / DEFAULT_SEA_PRESSURE), 0.1902949f));
+            Data.Altitude= 44330.0f * (1.0f - pow((Data.PressureHPA / 100 / DEFAULT_SEA_PRESSURE), 0.1902949f));
         }
         return Data;
     }
