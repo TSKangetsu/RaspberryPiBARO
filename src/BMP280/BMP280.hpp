@@ -24,6 +24,7 @@
 #define BMP280_CONFIG_REG 0xF5          /*Configuration Register */
 #define BMP280_PRESSURE_MSB_REG 0xF7    /*Pressure MSB Register */
 #define BMP280_TEMPERATURE_MSB_REG 0xFA /*Temperature MSB Reg */
+
 #define DEFAULT_SEA_PRESSURE 1013.25f
 
 #define BMP280_MODE1 (BMP280_P_MODE_5 << 2 | BMP280_T_MODE_5 << 5 | BMP280_NORMAL_MODE)
@@ -142,7 +143,6 @@ public:
                 var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
                 Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
             }
-            Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / 100 / DEFAULT_SEA_PRESSURE), 0.1902949f));
         }
         return Data;
     }
