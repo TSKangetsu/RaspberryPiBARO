@@ -208,9 +208,9 @@ public:
                 Data.PressureHPA = (Data.PressureHPA - (var2 / 4096.0)) * 6250.0 / var1;
                 var1 = ((double)C[11]) * Data.PressureHPA * Data.PressureHPA / 2147483648.0;
                 var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
-                Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
+                Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 100 / 16.0;
             }
-            Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / 100 / DEFAULT_SEA_PRESSURE), 0.1902949f));
+            Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / DEFAULT_SEA_PRESSURE), 0.1902949f));
         }
         return Data;
     }
@@ -219,7 +219,7 @@ public:
     {
         close(BMP280FD);
     };
-  
+
     typedef enum
     {
         BMP280_SLEEP_MODE = 0x0,
@@ -268,7 +268,7 @@ public:
         BMP280_T_SB7,       /*2000ms*/
         BMP280_T_SB8,       /*4000ms*/
     } BMP280_T_SB;
-  
+
 private:
     uint8_t wdata[2];
     uint8_t rdata[24];
