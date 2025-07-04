@@ -26,8 +26,8 @@
 #define BMP280_TEMPERATURE_MSB_REG 0xFA /*Temperature MSB Reg */
 
 #define DEFAULT_SEA_PRESSURE 1013.25f
-#define BMP280_MODE1 (BMP280_P_MODE_5 << 2 | BMP280_T_MODE_5 << 5 | BMP280_NORMAL_MODE)
-#define BMP280_MODE2 (BMP280_FILTER_MODE_5 << 2 | BMP280_T_SB2 << 5)
+#define BMP280_MODE1 ((BMP280_P_MODE_4 << 2) | (BMP280_T_MODE_1 << 5) | (BMP280_NORMAL_MODE))
+#define BMP280_MODE2 ((BMP280_FILTER_MODE_4 << 2) | (BMP280_T_SB2 << 5))
 
 typedef long signed int BMP280_S32_t;
 class BMP280Baro
@@ -219,7 +219,7 @@ public:
     {
         close(BMP280FD);
     };
-  
+
     typedef enum
     {
         BMP280_SLEEP_MODE = 0x0,
@@ -268,7 +268,7 @@ public:
         BMP280_T_SB7,       /*2000ms*/
         BMP280_T_SB8,       /*4000ms*/
     } BMP280_T_SB;
-  
+
 private:
     uint8_t wdata[2];
     uint8_t rdata[24];
