@@ -7,7 +7,7 @@ int main(int, char **)
     BaroDevice *Baro;
     try
     {
-        Baro = new BaroDevice(BaroType::BMP280, "/dev/i2c-1", 0x77);
+        Baro = new BaroDevice(BaroType::BMP280, "/dev/i2c-0", 0x76);
     }
     catch (int error)
     {
@@ -34,17 +34,17 @@ int main(int, char **)
         BData = Baro->BaroRead();
         if (BData.IsDataCorrect)
         {
-            // filterP = BData.PressureHPA; // if mode is bmp2800
-            // filterT = BData.TemperatureC;
+            filterP = BData.PressureHPA; // if mode is bmp2800
+            filterT = BData.TemperatureC;
 
-            // filterA = filterA * 0.8 + BData.AltitudeM * 0.2;
-            // filterP = filterP * 0.8 + BData.PressureHPA * 0.2;
-            // filterT = filterT * 0.8 + BData.TemperatureC * 0.2;
-            // std::cout << "Baro Altitude CM :" << (int)(filterA * 100.f) << "                                      \n";
-            // std::cout << "Baro Pressure HPA:" << (int)(filterP * 100.f) / 100.f << "                                      \n";
-            // std::cout << "Baro TemperatureC:" << (int)(filterT * 100.f) / 100.f << "                                      \n\n";
-            // std::cout << "\033[4A";
-            // std::cout << "\033[K";
+            filterA = filterA * 0.8 + BData.AltitudeM * 0.2;
+            filterP = filterP * 0.8 + BData.PressureHPA * 0.2;
+            filterT = filterT * 0.8 + BData.TemperatureC * 0.2;
+            std::cout << "Baro Altitude CM :" << (int)(filterA * 100.f) << "                                      \n";
+            std::cout << "Baro Pressure HPA:" << (int)(filterP * 100.f) / 100.f << "                                      \n";
+            std::cout << "Baro TemperatureC:" << (int)(filterT * 100.f) / 100.f << "                                      \n\n";
+            std::cout << "\033[4A";
+            std::cout << "\033[K";
         }
         else
         {

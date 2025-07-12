@@ -27,7 +27,7 @@
 
 #define DEFAULT_SEA_PRESSURE 1013.25f
 #define BMP280_MODE1 ((BMP280_P_MODE_4 << 2) | (BMP280_T_MODE_1 << 5) | (BMP280_NORMAL_MODE))
-#define BMP280_MODE2 ((BMP280_FILTER_MODE_4 << 2) | (BMP280_T_SB2 << 5))
+#define BMP280_MODE2 ((BMP280_FILTER_MODE_3 << 2) | (BMP280_T_SB2 << 5))
 
 typedef long signed int BMP280_S32_t;
 class BMP280Baro
@@ -141,7 +141,9 @@ public:
                 var1 = ((double)C[11]) * Data.PressureHPA * Data.PressureHPA / 2147483648.0;
                 var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
                 Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
+                Data.IsDataCorrect = true;
             }
+            Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / 100 / DEFAULT_SEA_PRESSURE), 0.1902949f));
         }
         return Data;
     }
@@ -209,6 +211,7 @@ public:
                 var1 = ((double)C[11]) * Data.PressureHPA * Data.PressureHPA / 2147483648.0;
                 var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
                 Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
+                Data.IsDataCorrect = true;
             }
             Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / 100 / DEFAULT_SEA_PRESSURE), 0.1902949f));
         }
