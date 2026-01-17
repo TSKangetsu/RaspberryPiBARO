@@ -63,10 +63,10 @@ public:
         usleep(500);
         if (iddata == 88)
         {
-            input[0] = BMP280_CTRLMEAS_REG;
-            input[1] = BMP280_MODE1;
-            write(BMP280FD, input, 2);
-            usleep(500);
+            // input[0] = BMP280_CTRLMEAS_REG;
+            // input[1] = BMP280_MODE1;
+            // write(BMP280FD, input, 2);
+            // usleep(500);
             input[0] = BMP280_CONFIG_REG;
             input[1] = BMP280_FLITER;
             write(BMP280FD, input, 2);
@@ -90,7 +90,7 @@ public:
         write(BMP280FD, input, 2);
         I2CDeviceLock != NULL ? I2CDeviceLock->unlock() : void();
         //
-        usleep(30000);
+        usleep(23500);
         //
         int h;
         uint8_t D[6] = {0};
