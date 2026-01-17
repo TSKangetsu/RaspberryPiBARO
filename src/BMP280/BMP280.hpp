@@ -15,8 +15,6 @@
 #include "../Baro.hpp"
 
 #define BMP280_ADDRESS 0x76
-#define MS5611RESETADDR 0xe0
-#define MS5611RESET 0xb6
 #define BMP280_ID_REG 0xD0
 
 #define BMP280_DIG_T1_LSB_REG 0x88
@@ -26,8 +24,8 @@
 #define BMP280_TEMPERATURE_MSB_REG 0xFA /*Temperature MSB Reg */
 
 #define DEFAULT_SEA_PRESSURE 1013.25f
-#define BMP280_MODE1 ((BMP280_P_MODE_4 << 2) | (BMP280_T_MODE_1 << 5) | (BMP280_FORCED_MODE))
-#define BMP280_MODE2 ((BMP280_FILTER_MODE_3 << 2))
+#define BMP280_MODE1 ((BMP280_MODE_8X << 2) | (BMP280_MODE_1X << 5) | (BMP280_FORCED_MODE))
+#define BMP280_FLITER ((BMP280_FILTER_8X << 2))
 
 typedef long signed int BMP280_S32_t;
 class BMP280Baro
@@ -58,11 +56,6 @@ public:
         }
         // reset
         char input[2] = {0x00, 0x00};
-        input[0] = MS5611RESETADDR;
-        input[1] = MS5611RESET;
-        if (write(BMP280FD, &input, 2) != 2)
-            throw -3;
-        usleep(500);
         // read id
         input[0] = BMP280_ID_REG;
         write(BMP280FD, &input, 1);
@@ -75,7 +68,7 @@ public:
             write(BMP280FD, input, 2);
             usleep(500);
             input[0] = BMP280_CONFIG_REG;
-            input[1] = BMP280_MODE2;
+            input[1] = BMP280_FLITER;
             write(BMP280FD, input, 2);
         }
         else
@@ -84,142 +77,76 @@ public:
 
     inline BaroData BMP280Read()
     {
-
-        BaroData Data;
-        char input[2] = {0x00, 0x00};
-        input[0] = BMP280_CTRLMEAS_REG;
-        input[1] = BMP280_MODE1;
-        write(BMP280FD, input, 2);
-        // TemperatureC Raw
-        {
-            uint8_t D[] = {0, 0, 0};
-            int h;
-            char output = 0x00;
-            output = BMP280_TEMPERATURE_MSB_REG;
-            write(BMP280FD, &output, 1); // read data
-            h = read(BMP280FD, D, 3);
-            if (h != 3)
-                Data.IsDataCorrect = false;
-            else
-            {
-                bmp280RawTemperature = (uint32_t)D[0] << 16 | (uint32_t)D[1] << 8 | (uint32_t)D[2];
-                bmp280RawTemperature >>= 4;
-                double var1, var2;
-                var1 = (((double)bmp280RawTemperature) / 16384.0 - ((double)C[0]) / 1024.0) * ((double)C[1]);
-                var2 = ((((double)bmp280RawTemperature) / 131072.0 - ((double)C[0]) / 8192.0) *
-                        (((double)bmp280RawTemperature) / 131072.0 - ((double)C[0]) / 8192.0)) *
-                       ((double)C[2]);
-                t_fine = (BMP280_S32_t)(var1 + var2);
-                Data.TemperatureC = (var1 + var2) / 5120.0;
-            }
-        }
-        // Pressure Raw
-        {
-            uint8_t D[] = {0, 0, 0};
-            int h;
-            char output = 0x00;
-            output = BMP280_PRESSURE_MSB_REG;
-            write(BMP280FD, &output, 1); // read data
-            h = read(BMP280FD, D, 3);
-            if (h != 3)
-                Data.IsDataCorrect = false;
-            else
-            {
-                bmp280RawPressure = (uint32_t)D[0] << 16 | (uint32_t)D[1] << 8 | (uint32_t)D[2];
-                bmp280RawPressure >>= 4;
-                double var1, var2;
-                var1 = ((double)t_fine / 2.0) - 64000.0;
-                var2 = var1 * var1 * ((double)C[8]) / 32768.0;
-
-                var2 = var2 + var1 * ((double)C[7]) * 2.0;
-                var2 = (var2 / 4.0) + (((double)C[6]) * 65536.0);
-                var1 = (((double)C[5]) * var1 * var1 / 524288.0 + ((double)C[4]) * var1) / 524288.0;
-                var1 = (1.0 + var1 / 32768.0) * ((double)(u_int16_t)C[3]);
-                if (var1 == 0.0)
-                {
-                    throw -5;
-                }
-                Data.PressureHPA = 1048576.0 - (double)bmp280RawPressure;
-                Data.PressureHPA = (Data.PressureHPA - (var2 / 4096.0)) * 6250.0 / var1;
-                var1 = ((double)C[11]) * Data.PressureHPA * Data.PressureHPA / 2147483648.0;
-                var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
-                Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
-                Data.IsDataCorrect = true;
-            }
-            Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / 100 / DEFAULT_SEA_PRESSURE), 0.1902949f));
-        }
-        return Data;
+        return BMP280Read(NULL);
     }
 
     inline BaroData BMP280Read(std::mutex *I2CDeviceLock)
     {
-
         BaroData Data;
-        char input[2] = {0x00, 0x00};
-        input[0] = BMP280_CTRLMEAS_REG;
-        input[1] = BMP280_MODE1;
+        Data.IsDataCorrect = false;
+        //
+        const char input[2] = {BMP280_CTRLMEAS_REG, BMP280_MODE1};
+        I2CDeviceLock != NULL ? I2CDeviceLock->lock() : void();
         write(BMP280FD, input, 2);
-        // TemperatureC Raw
+        I2CDeviceLock != NULL ? I2CDeviceLock->unlock() : void();
+        //
+        usleep(30000);
+        //
+        int h;
+        uint8_t D[6] = {0};
+        const char output = BMP280_PRESSURE_MSB_REG;
+
+        I2CDeviceLock != NULL ? I2CDeviceLock->lock() : void();
+        write(BMP280FD, &output, 1);
+        h = read(BMP280FD, D, sizeof(D));
+        I2CDeviceLock != NULL ? I2CDeviceLock->unlock() : void();
+
+        if (h == 6)
         {
-            uint8_t D[] = {0, 0, 0};
-            int h;
-            char output = 0x00;
-            output = BMP280_TEMPERATURE_MSB_REG;
-            I2CDeviceLock->lock();
-            write(BMP280FD, &output, 1); // read data
-            h = read(BMP280FD, D, 3);
-            I2CDeviceLock->unlock();
-            if (h != 3)
-                Data.IsDataCorrect = false;
-            else
+            // Temperature Raw
             {
-                bmp280RawTemperature = (uint32_t)D[0] << 16 | (uint32_t)D[1] << 8 | (uint32_t)D[2];
-                bmp280RawTemperature >>= 4;
+                bmp280RawTemperature = (int32_t)((((uint32_t)(D[3])) << 12) | (((uint32_t)(D[4])) << 4) | ((uint32_t)D[5] >> 4));
                 double var1, var2;
-                var1 = (((double)bmp280RawTemperature) / 16384.0 - ((double)C[0]) / 1024.0) * ((double)C[1]);
-                var2 = ((((double)bmp280RawTemperature) / 131072.0 - ((double)C[0]) / 8192.0) *
-                        (((double)bmp280RawTemperature) / 131072.0 - ((double)C[0]) / 8192.0)) *
+                var1 = (((double)bmp280RawTemperature) / 16384.0 - ((double)(uint16_t)C[0]) / 1024.0) * ((double)C[1]);
+                var2 = ((((double)bmp280RawTemperature) / 131072.0 - ((double)(uint16_t)C[0]) / 8192.0) *
+                        (((double)bmp280RawTemperature) / 131072.0 - ((double)(uint16_t)C[0]) / 8192.0)) *
                        ((double)C[2]);
-                t_fine = (BMP280_S32_t)(var1 + var2);
+
+                t_fine = (int32_t)(var1 + var2);
                 Data.TemperatureC = (var1 + var2) / 5120.0;
             }
-        }
-        // Pressure Raw
-        {
-            uint8_t D[] = {0, 0, 0};
-            int h;
-            char output = 0x00;
-            output = BMP280_PRESSURE_MSB_REG;
-            I2CDeviceLock->lock();
-            write(BMP280FD, &output, 1); // read data
-            h = read(BMP280FD, D, 3);
-            I2CDeviceLock->unlock();
-            if (h != 3)
-                Data.IsDataCorrect = false;
-            else
+            // Pressure Raw
             {
-                bmp280RawPressure = (uint32_t)D[0] << 16 | (uint32_t)D[1] << 8 | (uint32_t)D[2];
-                bmp280RawPressure >>= 4;
+                bmp280RawPressure = (int32_t)((((uint32_t)(D[0])) << 12) | (((uint32_t)(D[1])) << 4) | ((uint32_t)D[2] >> 4));
+
                 double var1, var2;
                 var1 = ((double)t_fine / 2.0) - 64000.0;
                 var2 = var1 * var1 * ((double)C[8]) / 32768.0;
-
                 var2 = var2 + var1 * ((double)C[7]) * 2.0;
                 var2 = (var2 / 4.0) + (((double)C[6]) * 65536.0);
                 var1 = (((double)C[5]) * var1 * var1 / 524288.0 + ((double)C[4]) * var1) / 524288.0;
-                var1 = (1.0 + var1 / 32768.0) * ((double)(u_int16_t)C[3]);
-                if (var1 == 0.0)
+                var1 = (1.0 + var1 / 32768.0) * ((double)(uint16_t)C[3]);
+                if (var1 != 0.0)
                 {
-                    throw -5;
+                    Data.PressureHPA = 1048576.0 - (double)bmp280RawPressure;
+                    Data.PressureHPA = (Data.PressureHPA - (var2 / 4096.0)) * 6250.0 / var1;
+                    var1 = ((double)C[11]) * Data.PressureHPA * Data.PressureHPA / 2147483648.0;
+                    var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
+                    double pressure_Pa = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
+
+                    Data.PressureHPA = pressure_Pa / 100.0;
+                    Data.AltitudeM = 44330.0 * (1.0 - pow((Data.PressureHPA / DEFAULT_SEA_PRESSURE), 0.1902949));
+                    Data.AltitudeM = (float)((int)(Data.AltitudeM * 100.0f + 0.5f)) / 100.0f;
+
+                    Data.IsDataCorrect = true;
                 }
-                Data.PressureHPA = 1048576.0 - (double)bmp280RawPressure;
-                Data.PressureHPA = (Data.PressureHPA - (var2 / 4096.0)) * 6250.0 / var1;
-                var1 = ((double)C[11]) * Data.PressureHPA * Data.PressureHPA / 2147483648.0;
-                var2 = Data.PressureHPA * ((double)C[10]) / 32768.0;
-                Data.PressureHPA = Data.PressureHPA + (var1 + var2 + ((double)C[9])) / 16.0;
-                Data.IsDataCorrect = true;
+                else
+                {
+                    Data.PressureHPA = 0;
+                    Data.AltitudeM = 0;
+                    Data.IsDataCorrect = false;
+                }
             }
-            Data.AltitudeM = 44330.0f * (1.0f - pow((Data.PressureHPA / 100 / DEFAULT_SEA_PRESSURE), 0.1902949f));
         }
         return Data;
     }
@@ -238,32 +165,21 @@ public:
 
     typedef enum
     {
-        BMP280_P_MODE_SKIP = 0x0,
-        BMP280_P_MODE_1,
-        BMP280_P_MODE_2,
-        BMP280_P_MODE_3,
-        BMP280_P_MODE_4,
-        BMP280_P_MODE_5
-    } BMP280_P_OVERSAMPLING;
-
-    typedef enum
-    {
-        BMP280_T_MODE_SKIP = 0x0,
-        BMP280_T_MODE_1,
-        BMP280_T_MODE_2,
-        BMP280_T_MODE_3,
-        BMP280_T_MODE_4,
-        BMP280_T_MODE_5
-    } BMP280_T_OVERSAMPLING;
+        BMP280_MODE_SKIP = 0x0,
+        BMP280_MODE_1X,
+        BMP280_MODE_2X,
+        BMP280_MODE_4X,
+        BMP280_MODE_8X,
+        BMP280_MODE_16X
+    } BMP280_OVERSAMPLING;
 
     typedef enum
     {
         BMP280_FILTER_OFF = 0x0,
-        BMP280_FILTER_MODE_1,
-        BMP280_FILTER_MODE_2,
-        BMP280_FILTER_MODE_3,
-        BMP280_FILTER_MODE_4,
-        BMP280_FILTER_MODE_5
+        BMP280_FILTER_2X,
+        BMP280_FILTER_4X,
+        BMP280_FILTER_8X,
+        BMP280_FILTER_16X
     } BMP280_FILTER_COEFFICIENT;
 
     typedef enum
