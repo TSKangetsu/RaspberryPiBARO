@@ -1,8 +1,19 @@
 #include <iostream>
 #include "src/BaroDevice.hpp"
+#include <sys/time.h>
+
+
+inline int GetTimestamp()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * (uint64_t)1000000 + tv.tv_usec;
+}
 
 int main(int, char **)
 {
+    int TimeStart;
+    int TimeEnd;
     // Don't Try to Copy between two baro Device
     BaroDevice *Baro;
     try
@@ -31,6 +42,7 @@ int main(int, char **)
     BaroData BData;
     while (true)
     {
+        TimeStart = GetTimestamp();
         BData = Baro->BaroRead();
         if (BData.IsDataCorrect)
         {
@@ -40,10 +52,13 @@ int main(int, char **)
             filterA = filterA * 0.8 + BData.AltitudeM * 0.2;
             filterP = filterP * 0.8 + BData.PressureHPA * 0.2;
             filterT = filterT * 0.8 + BData.TemperatureC * 0.2;
+            usleep(25000);
+            TimeEnd = GetTimestamp();
             std::cout << "Baro Altitude CM :" << (int)(filterA * 100.f) << "                                      \n";
             std::cout << "Baro Pressure HPA:" << (int)(filterP * 100.f) / 100.f << "                                      \n";
-            std::cout << "Baro TemperatureC:" << (int)(filterT * 100.f) / 100.f << "                                      \n\n";
-            std::cout << "\033[4A";
+            std::cout << "Baro TemperatureC:" << (int)(filterT * 100.f) / 100.f << "                                      \n";
+            std::cout<<" tim:"<<TimeEnd-TimeStart<<"                                      \n\n";
+            std::cout << "\033[5A";
             std::cout << "\033[K";
         }
         else

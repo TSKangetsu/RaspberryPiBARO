@@ -26,8 +26,8 @@
 #define BMP280_TEMPERATURE_MSB_REG 0xFA /*Temperature MSB Reg */
 
 #define DEFAULT_SEA_PRESSURE 1013.25f
-#define BMP280_MODE1 ((BMP280_P_MODE_4 << 2) | (BMP280_T_MODE_1 << 5) | (BMP280_NORMAL_MODE))
-#define BMP280_MODE2 ((BMP280_FILTER_MODE_3 << 2) | (BMP280_T_SB2 << 5))
+#define BMP280_MODE1 ((BMP280_P_MODE_4 << 2) | (BMP280_T_MODE_1 << 5) | (BMP280_FORCED_MODE))
+#define BMP280_MODE2 ((BMP280_FILTER_MODE_3 << 2))
 
 typedef long signed int BMP280_S32_t;
 class BMP280Baro
@@ -86,7 +86,10 @@ public:
     {
 
         BaroData Data;
-
+        char input[2] = {0x00, 0x00};
+        input[0] = BMP280_CTRLMEAS_REG;
+        input[1] = BMP280_MODE1;
+        write(BMP280FD, input, 2);
         // TemperatureC Raw
         {
             uint8_t D[] = {0, 0, 0};
@@ -152,7 +155,10 @@ public:
     {
 
         BaroData Data;
-
+        char input[2] = {0x00, 0x00};
+        input[0] = BMP280_CTRLMEAS_REG;
+        input[1] = BMP280_MODE1;
+        write(BMP280FD, input, 2);
         // TemperatureC Raw
         {
             uint8_t D[] = {0, 0, 0};
